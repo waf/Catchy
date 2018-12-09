@@ -1,8 +1,9 @@
-# Catchy - A caching proxy for local development
+# Catchy
+
+**A caching proxy for local development**
 
 Developers often need to integrate with third-party webservices, even when developing locally.
-These third-party webservices can lead to slower development speed, especially because test environments
-tend to be slower than production environments. **Catchy** helps you speed back up!
+These third-party webservices can lead to slower development speed. **Catchy** helps you speed back up!
 
 1. Start Catchy from the commandline, providing the hostnames of your third-party webservices and how to cache them.
 1. Cachy will automatically configure itself as your system proxy.
