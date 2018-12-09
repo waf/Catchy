@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Catchy": {
+      "commandName": "Project",
+      "commandLineArgs": "--CacheByRestRequest worldtimeapi.org --CacheByRestRequest hn.algolia.com"
+    }
+  }
+}
