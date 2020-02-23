@@ -86,7 +86,7 @@ namespace Catchy
                         cacheStrategyTypes,
                         option => option.LongName,
                         strategy => strategy.Name,
-                        (option, strategy) => Activator.CreateInstance(strategy, new[] { option.Values }) as ICacheStrategy
+                        (option, strategy) => InstantiateStrategy(strategy, option)
                     )
                     .ToList();
 
@@ -97,6 +97,14 @@ namespace Catchy
 
             return app;
         }
+
+        /// <summary>
+        /// Instantiates the provided caching strategy with the provided command line options
+        /// </summary>
+        private static ICacheStrategy InstantiateStrategy(Type cacheStrategy, CommandOption option) =>
+            Activator.CreateInstance(cacheStrategy, new[] { option.Values }) is ICacheStrategy instantiatedStrategy
+                ? instantiatedStrategy
+                : throw new InvalidOperationException("Unable to instantiate strategy: " + cacheStrategy.GetType().Name);
 
         /// <summary>
         /// The main application flow. Starts and configures the proxy, and

@@ -16,6 +16,10 @@ namespace Catchy.HttpProxy
         private readonly ExplicitProxyEndPoint explicitEndPoint;
         private readonly Predicate<Uri> shouldDecrypt;
 
+        public event AsyncEventHandler<IHttpExchange>? OnRequest;
+        public event AsyncEventHandler<IHttpExchange>? OnResponse;
+        public event EventHandler<Exception>? OnError;
+
         public Proxy(IPAddress ipAddress, int port, Predicate<Uri> shouldDecrypt)
         {
             this.proxyServer = new ProxyServer();
@@ -43,14 +47,17 @@ namespace Catchy.HttpProxy
             return Task.CompletedTask;
         }
 
-        public event AsyncEventHandler<IHttpExchange> OnRequest;
-        public event AsyncEventHandler<IHttpExchange> OnResponse;
-        public event EventHandler<Exception> OnError;
+        private async Task OnRequestHandler(object sender, SessionEventArgs sessionEventArgs)
+        {
+            if (OnRequest is null) return;
+            await OnRequest.Invoke(sender, new HttpExchange(sessionEventArgs));
+        }
 
-        private Task OnRequestHandler(object sender, SessionEventArgs sessionEventArgs) =>
-            OnRequest?.Invoke(sender, new HttpExchange(sessionEventArgs));
-        private Task OnResponseHandler(object sender, SessionEventArgs sessionEventArgs) =>
-            OnResponse?.Invoke(sender, new HttpExchange(sessionEventArgs));
+        private async Task OnResponseHandler(object sender, SessionEventArgs sessionEventArgs)
+        {
+            if (OnResponse is null) return;
+            await OnResponse.Invoke(sender, new HttpExchange(sessionEventArgs));
+        }
 
         public void Dispose()
         {
