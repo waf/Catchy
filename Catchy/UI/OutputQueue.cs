@@ -35,7 +35,11 @@ namespace Catchy.UI
             {
                 while(!token.IsCancellationRequested)
                 {
-                    var message = messages.Take(token); // blocks
+                    Message message = default;
+
+                    try { message = messages.Take(token); }
+                    catch (OperationCanceledException) { return; }
+
                     if(message.Color is null)
                     {
                         Console.WriteLine(message.Text);

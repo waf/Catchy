@@ -22,6 +22,8 @@ namespace Catchy.HttpProxy
             this.explicitEndPoint = new ExplicitProxyEndPoint(ipAddress, port, true);
             this.shouldDecrypt = shouldDecrypt;
 
+            proxyServer.EnableHttp2 = true;
+            proxyServer.CertificateManager.CreateRootCertificate(false);
             proxyServer.CertificateManager.TrustRootCertificate();
             proxyServer.AddEndPoint(explicitEndPoint);
 
@@ -36,7 +38,7 @@ namespace Catchy.HttpProxy
 
         private Task BeforeTunnelConnectRequest(object sender, TunnelConnectSessionEventArgs e)
         {
-            var uri = e.WebSession.Request.RequestUri;
+            var uri = e.HttpClient.Request.RequestUri;
             e.DecryptSsl = this.shouldDecrypt(uri);
             return Task.CompletedTask;
         }
