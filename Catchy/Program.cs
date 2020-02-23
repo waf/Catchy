@@ -46,7 +46,7 @@ namespace Catchy
 
             var app = new CommandLineApplication { Name = nameof(Catchy) };
             app.HelpOption();
-            app.ExtendedHelpText = $"{Environment.NewLine}Example:{Environment.NewLine}  Catchy --CacheByUrl worldtimeapi.org --CacheByUrl news.ycombinator.com{Environment.NewLine}";
+            app.ExtendedHelpText = $"{Environment.NewLine}Example:{Environment.NewLine}  Catchy --CacheByRestRequest worldtimeapi.org --CacheByRestRequest news.ycombinator.com{Environment.NewLine}";
 
             var portOption = app.Option<int>(
                     template: "-p|--port <PORT>",
