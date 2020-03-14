@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Http;
@@ -20,8 +19,21 @@ namespace Catchy.HttpProxy
             this.session = session;
         }
 
-        public Request Request => session.HttpClient.Request;
-        public Response Response => session.HttpClient.Response;
+        public string RequestMethod => session.HttpClient.Request.Method;
+        public Uri RequestUrl => session.HttpClient.Request.RequestUri;
+        public HeaderCollection RequestHeaders => session.HttpClient.Request.Headers;
+        public Task<string> GetRequestBody() => session.GetRequestBodyAsString();
+
+        public async Task<Response> GetResponse()
+        {
+            var response = session.HttpClient.Response;
+            response.KeepBody = true; // keep the response body around after the request/response is finished
+            if (response.ContentLength > 0) // GetResponseBody will throw if there's no content
+            {
+                _ = await session.GetResponseBody(); // force the body to be read, so we can access it later
+            }
+            return response;
+        }
 
         public object? UserData
         {
@@ -31,15 +43,6 @@ namespace Catchy.HttpProxy
 
         public void Respond(Response response) =>
             session.Respond(response);
-
-        public async Task KeepResponseBody(CancellationToken cancellationToken = default)
-        {
-            Response.KeepBody = true; // keep the response body around after the request/response is finished
-            if(Response.ContentLength > 0) // GetResponseBody will throw if there's no content
-            {
-                _ = await session.GetResponseBody(cancellationToken); // force the body to be read, so we can access it later
-            }
-        }
     }
 
     /// <summary>
@@ -47,11 +50,13 @@ namespace Catchy.HttpProxy
     /// </summary>
     public interface IHttpExchange
     {
-        Request Request { get; }
-        Response Response { get; }
+        string RequestMethod { get; }
+        Uri RequestUrl { get; }
+        HeaderCollection RequestHeaders { get; }
+        Task<string> GetRequestBody();
+        Task<Response> GetResponse();
         object? UserData { get; set; }
 
         void Respond(Response response);
-        Task KeepResponseBody(CancellationToken cancellationToken = default);
     }
 }

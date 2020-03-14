@@ -27,8 +27,8 @@ namespace Catchy.HttpProxy
             this.shouldDecrypt = shouldDecrypt;
 
             proxyServer.EnableHttp2 = true;
-            proxyServer.CertificateManager.CreateRootCertificate(false);
-            proxyServer.CertificateManager.TrustRootCertificate();
+            proxyServer.CertificateManager.CreateRootCertificate(persistToFile: true);
+            proxyServer.CertificateManager.TrustRootCertificate(machineTrusted: true);
             proxyServer.AddEndPoint(explicitEndPoint);
 
             explicitEndPoint.BeforeTunnelConnectRequest += BeforeTunnelConnectRequest;

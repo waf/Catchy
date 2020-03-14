@@ -25,20 +25,19 @@ namespace Catchy.CacheStrategies
             HandledHosts = handledHosts;
         }
 
-        public bool CanHandle(Request request) =>
-            HandledHosts.Contains(request.Host)
-            && request.Headers.HeaderExists("SOAPAction");
+        public bool CanHandle(IHttpExchange httpExchange) =>
+            HandledHosts.Contains(httpExchange.RequestUrl.Host)
+            && httpExchange.RequestHeaders.HeaderExists("SOAPAction");
 
         public async Task StoreResponseInCacheAsync(IHttpExchange httpExchange)
         {
-            RequestHash hash = GetHashForSoapBody(httpExchange);
-            await httpExchange.KeepResponseBody();
-            cache[hash] = httpExchange.Response;
+            RequestHash hash = await GetRequestBodyHash(httpExchange);
+            cache[hash] = await httpExchange.GetResponse();
         }
 
-        public bool TrySetResponseFromCache(IHttpExchange httpExchange)
+        public async Task<bool> TrySetResponseFromCache(IHttpExchange httpExchange)
         {
-            RequestHash hash = GetHashForSoapBody(httpExchange);
+            string hash = await GetRequestBodyHash(httpExchange);
             if (cache.Get(hash) is Response response)
             {
                 httpExchange.Respond(response);
@@ -47,14 +46,17 @@ namespace Catchy.CacheStrategies
             return false;
         }
 
-        private RequestHash GetHashForSoapBody(IHttpExchange httpExchange) =>
-            GetSoapBodyText(httpExchange.Request.BodyString).GetHash();
+        private async Task<RequestHash> GetRequestBodyHash(IHttpExchange httpExchange)
+        {
+            var body = await httpExchange.GetRequestBody();
+            return GetSoapBodyText(body).GetHash();
+        }
 
         private string GetSoapBodyText(string xmlText)
         {
             using (var xml = XmlReader.Create(new StringReader(xmlText)))
             {
-                var bodyElement = xml.ReadToDescendant("Body", "http://schemas.xmlsoap.org/soap/envelope/");
+                _ = xml.ReadToDescendant("Body", "http://schemas.xmlsoap.org/soap/envelope/");
                 return xml.ReadInnerXml();
             }
         }

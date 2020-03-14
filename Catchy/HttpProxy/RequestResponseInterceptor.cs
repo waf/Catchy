@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Catchy.CacheStrategies;
+using Catchy.UI;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Catchy.CacheStrategies;
-using Catchy.UI;
 
 namespace Catchy.HttpProxy
 {
@@ -15,18 +15,17 @@ namespace Catchy.HttpProxy
             this.cacheStrategies = cacheStrategies;
         }
 
-        public Task InterceptRequest(IHttpExchange session)
+        public async Task InterceptRequest(IHttpExchange session)
         {
-            var request = session.Request;
-            var cacheStrategy = cacheStrategies.FirstOrDefault(handler => handler.CanHandle(request));
-            if(cacheStrategy is null)
+            var cacheStrategy = cacheStrategies.FirstOrDefault(handler => handler.CanHandle(session));
+            if (cacheStrategy is null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
-            if(cacheStrategy.TrySetResponseFromCache(session))
+            if (await cacheStrategy.TrySetResponseFromCache(session))
             {
-                ConsoleUI.CachedResponseMessage(request.Url);
+                ConsoleUI.CachedResponseMessage(session.RequestUrl.ToString());
             }
             else
             {
@@ -34,14 +33,13 @@ namespace Catchy.HttpProxy
                 // by setting this, InterceptResponse will use it to cache the response.
                 session.UserData = cacheStrategy;
             }
-            return Task.CompletedTask;
         }
 
         public async Task InterceptResponse(IHttpExchange session)
         {
-            if(session.UserData is ICacheStrategy handler)
+            if (session.UserData is ICacheStrategy handler)
             {
-                ConsoleUI.CapturingResponseMessage(session.Request.Url);
+                ConsoleUI.CapturingResponseMessage(session.RequestUrl.ToString());
                 await handler.StoreResponseInCacheAsync(session);
             }
         }

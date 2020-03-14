@@ -1,13 +1,13 @@
-﻿using Catchy.HttpProxy;
-using Catchy.CacheStrategies;
+﻿using Catchy.CacheStrategies;
+using Catchy.HttpProxy;
 using Catchy.UI;
+using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using McMaster.Extensions.CommandLineUtils;
-using System.ComponentModel.DataAnnotations;
 
 namespace Catchy
 {
@@ -118,7 +118,7 @@ namespace Catchy
             ConsoleUI.DescribeHandledHosts(handledHosts);
 
             var interceptor = new RequestResponseInterceptor(cacheStrategies);
-            using (var proxy = new Proxy(IPAddress.Any, port, ShouldDecryptUrl))
+            using (var proxy = new Proxy(IPAddress.Parse("127.0.0.100"), port, ShouldDecryptUrl))
             {
                 proxy.OnRequest += (_, session) => interceptor.InterceptRequest(session);
                 proxy.OnResponse += (_, session) => interceptor.InterceptResponse(session);

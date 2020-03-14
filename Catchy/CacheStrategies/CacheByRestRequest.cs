@@ -23,19 +23,18 @@ namespace Catchy.CacheStrategies
             HandledHosts = handledHosts;
         }
 
-        public bool CanHandle(Request request) =>
-            HandledHosts.Contains(request.Host);
+        public bool CanHandle(IHttpExchange httpExchange) =>
+            HandledHosts.Contains(httpExchange.RequestUrl.Host);
 
         public async Task StoreResponseInCacheAsync(IHttpExchange httpExchange)
         {
-            await httpExchange.KeepResponseBody();
-            string cacheKey = GetCacheKey(httpExchange.Request);
-            cache[cacheKey] = httpExchange.Response;
+            string cacheKey = await GetCacheKey(httpExchange);
+            cache[cacheKey] = await httpExchange.GetResponse();
         }
 
-        public bool TrySetResponseFromCache(IHttpExchange httpExchange)
+        public async Task<bool> TrySetResponseFromCache(IHttpExchange httpExchange)
         {
-            string cacheKey = GetCacheKey(httpExchange.Request);
+            string cacheKey = await GetCacheKey(httpExchange);
             if (cache.Get(cacheKey) is Response response)
             {
                 httpExchange.Respond(response);
@@ -44,12 +43,12 @@ namespace Catchy.CacheStrategies
             return false;
         }
 
-        private string GetCacheKey(Request request)
+        private async Task<string> GetCacheKey(IHttpExchange exchange)
         {
-            string body = MethodsWithBody.Contains(request.Method)
-                ? request.BodyString
+            string body = MethodsWithBody.Contains(exchange.RequestMethod)
+                ? await exchange.GetRequestBody()
                 : "";
-            return $"{request.Method} {request.Url} {body}".GetHash();
+            return $"{exchange.RequestMethod} {exchange.RequestUrl} {body}".GetHash();
         }
     }
 }

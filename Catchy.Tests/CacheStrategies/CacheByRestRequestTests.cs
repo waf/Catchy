@@ -15,8 +15,12 @@ namespace Catchy.Tests.CacheStrategies
         public void CanHandle_RequestMatchesConfiguration_ReturnsTrue()
         {
             var cache = new CacheByRestRequest(new[] { "example.com" });
-            var request = new Request { Host = "example.com" };
-            var canHandle = cache.CanHandle(request);
+
+            var exchange = Substitute.For<IHttpExchange>();
+            exchange.RequestUrl.Returns(new Uri("http://example.com/cats/"));
+            exchange.RequestHeaders.Returns(new HeaderCollection());
+
+            var canHandle = cache.CanHandle(exchange);
             Assert.True(canHandle);
         }
 
@@ -24,8 +28,12 @@ namespace Catchy.Tests.CacheStrategies
         public void CanHandle_RequestDoesNotMatchConfiguration_ReturnsFalse()
         {
             var cache = new CacheByRestRequest(new[] { "example.com" });
-            var request = new Request { Host = "ejemplo.com" };
-            var canHandle = cache.CanHandle(request);
+
+            var exchange = Substitute.For<IHttpExchange>();
+            exchange.RequestUrl.Returns(new Uri("http://ejemplo.com/cats/"));
+            exchange.RequestHeaders.Returns(new HeaderCollection());
+
+            var canHandle = cache.CanHandle(exchange);
             Assert.False(canHandle);
         }
 
@@ -33,13 +41,10 @@ namespace Catchy.Tests.CacheStrategies
         public async Task StoreResponseInCacheAsync_ThenRetrieve_ReturnsStoredRequest()
         {
             // first request goes through, and the response should be cached
-            var firstExchange = Substitute.For<IHttpExchange>();
-            firstExchange.Request.Returns(new Request {
-                Method = "GET",
-                RequestUri = new Uri("http://example.com")
-            });
+            var firstExchange = Substitute.For<IHttpExchange>(); firstExchange.RequestUrl.Returns(new Uri("http://example.com"));
+            firstExchange.RequestMethod.Returns("GET");
             var response = new Response(Encoding.UTF8.GetBytes("Hello World!"));
-            firstExchange.Response.Returns(response);
+            firstExchange.GetResponse().Returns(response);
 
             // system under test, part 1
             var cache = new CacheByRestRequest(new[] { "example.com" });
@@ -47,14 +52,11 @@ namespace Catchy.Tests.CacheStrategies
 
             // second request comes, and the response should be returned from the cache
             var secondExchange = Substitute.For<IHttpExchange>();
-            secondExchange.Request.Returns(new Request
-            {
-                Method = "GET",
-                RequestUri = new Uri("http://example.com")
-            });
+            secondExchange.RequestMethod.Returns("GET");
+            secondExchange.RequestUrl.Returns(new Uri("http://example.com"));
 
             // system under test, part 2
-            bool success = cache.TrySetResponseFromCache(secondExchange);
+            bool success = await cache.TrySetResponseFromCache(secondExchange);
 
             Assert.True(success);
             secondExchange.Received().Respond(response);

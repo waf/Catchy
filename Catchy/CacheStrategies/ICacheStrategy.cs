@@ -1,7 +1,6 @@
 ﻿using Catchy.HttpProxy;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Titanium.Web.Proxy.Http;
 
 namespace Catchy.CacheStrategies
 {
@@ -24,7 +23,7 @@ namespace Catchy.CacheStrategies
         /// Whether or not this request handler knows how to handle the given HTTP request.
         /// If this method returns false, the other methods on this interface won't be called.
         /// </summary>
-        bool CanHandle(Request request);
+        bool CanHandle(IHttpExchange httpExchange);
 
         /// <summary>
         /// Stores the response for the given request/response pair.
@@ -38,6 +37,6 @@ namespace Catchy.CacheStrategies
         /// The implementation should use the API provided on the <paramref name="httpExchange"/>
         /// to set the response.
         /// </remarks>
-        bool TrySetResponseFromCache(IHttpExchange httpExchange);
+        Task<bool> TrySetResponseFromCache(IHttpExchange httpExchange);
     }
 }
